@@ -1,0 +1,36 @@
+CREATE OR REPLACE VIEW "wordpress_clean" AS
+SELECT title,
+	article_published_date,
+	author,
+	"split"("replace"(category, '&amp', ''), ';') categories,
+	CAST("json_parse"(tags) AS array(varchar)) tags,
+	url,
+	"regexp_extract"("$path", '[^/]+$') filename
+FROM "boardroom"."tbl_wordpress"
+WHERE ("length"(tags) > 0)
+UNION
+SELECT title,
+	article_published_date,
+	author,
+	"split"("replace"(category, '&amp', ''), ';') categories,
+	null tags,
+	url,
+	"regexp_extract"("$path", '[^/]+$') filename
+FROM "boardroom"."tbl_wordpress"
+WHERE ("length"(tags) < 1)
+
+
+
+CREATE OR REPLACE VIEW "wordpress_articles" AS 
+SELECT
+  title
+, article_published_date
+, author
+, category
+, tag
+, url
+, filename
+FROM
+  "boardroom"."wordpress_clean"
+, UNNEST(categories) t (category)
+, UNNEST(tags) t (tag)
